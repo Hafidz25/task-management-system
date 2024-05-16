@@ -13,6 +13,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 
 class BriefResource extends Resource
 {
@@ -24,46 +26,72 @@ class BriefResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('title')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\RichEditor::make('description')
-                    ->toolbarButtons([
-                        'attachFiles',
-                        'blockquote',
-                        'bold',
-                        'bulletList',
-                        'codeBlock',
-                        'h2',
-                        'h3',
-                        'italic',
-                        'link',
-                        'orderedList',
-                        'redo',
-                        'strike',
-                        'underline',
-                        'undo',
-                    ])
-                    ->required()
-                    ->columnSpanFull(),
-                Forms\Components\FileUpload::make('file')
-                    ->directory('briefs')
-                    ->enableDownload()
-                    ->enableOpen(),
-                Forms\Components\Select::make('user')
-                    ->label('Assign')
-                    ->relationship('user', 'name')
-                    ->multiple()
-                    ->preload()
-                    ->searchable(),
-                Forms\Components\Select::make('status')
-                    ->options([
-                        'draft' => 'Draft',
-                        'reviewing' => 'Reviewing',
-                        'published' => 'Published',
-                    ])
-                    
-                    ->native(false),
+                Forms\Components\Grid::make()                    
+                    ->schema([
+                        Forms\Components\Section::make('Brief Info')
+                            ->schema([
+                                Forms\Components\TextInput::make('title')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\RichEditor::make('description')
+                                    ->toolbarButtons([
+                                        // 'attachFiles',
+                                        'blockquote',
+                                        'bold',
+                                        'bulletList',
+                                        'codeBlock',
+                                        'h2',
+                                        'h3',
+                                        'italic',
+                                        'link',
+                                        'orderedList',
+                                        'redo',
+                                        'strike',
+                                        'underline',
+                                        'undo',
+                                    ])
+                                    ->required()
+                                    ->columnSpanFull(),
+                                Forms\Components\FileUpload::make('file')
+                                    ->directory('briefs')
+                                    ->enableDownload()
+                                    ->enableOpen(),
+                            ])
+                            ->columnSpan([
+                                'lg' => 12,
+                                'xl' => 6,
+                            ]),
+                        Forms\Components\Section::make()
+                            ->schema([
+                                Forms\Components\Select::make('user_id')
+                                    ->label('Assign')
+                                    ->relationship(name: 'user', titleAttribute: 'name')
+                                    // ->multiple()
+                                    ->preload()
+                                    ->searchable(),
+                                Forms\Components\Select::make('status')
+                                    ->options([
+                                        'Customer Service' => [
+                                            'assigned' => 'Assigned',
+                                            'in_review' => 'In Review',
+                                            'waiting' => 'Waiting',
+                                            'corection' => 'Corection',
+                                            'done' => 'Done',
+                                        ],
+                                        'Team Member' => [
+                                            'in_progress' => 'In Progress',
+                                            'need_review' => 'Need Review',
+                                        ],
+                                        
+                                    ])
+                                    ->native(false),
+                            ])
+                            ->columnSpan([
+                                'lg' => 12,
+                                'xl' => 3,
+                            ]),
+                    ])->columns(9),
+                
             ]);
     }
 
@@ -76,9 +104,30 @@ class BriefResource extends Resource
                 Tables\Columns\ImageColumn::make('file')
                     ->searchable(),
                     // ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('user')
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('Assign')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'assigned' => 'gray',
+                        'in_review' => 'warning',
+                        'waiting' => 'warning',
+                        'in_progress' => 'warning',
+                        'need_review' => 'warning',
+                        'corection' => 'danger',
+                        'done' => 'success',
+                    })
+                    ->icon(fn (string $state): string => match ($state) {
+                        'assigned' => 'heroicon-m-pencil-square',
+                        'in_review' => 'heroicon-m-eye',
+                        'waiting' => 'heroicon-m-arrow-path',
+                        'in_progress' => 'heroicon-m-clock',
+                        'need_review' => 'heroicon-m-chat-bubble-bottom-center-text',
+                        'corection' => 'heroicon-m-bug-ant',
+                        'done' => 'heroicon-m-check-circle',
+                    })
+                    ->formatStateUsing(fn ($state): string => Str::headline($state))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
