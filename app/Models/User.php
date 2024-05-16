@@ -9,6 +9,8 @@ use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Brief;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -26,6 +28,13 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
     ];
+
+    protected $guard_name = 'web';
+
+    public function brief(): HasMany
+    {
+        return $this->hasOne(Brief::class);
+    }
 
     /**
      * The attributes that should be hidden for serialization.

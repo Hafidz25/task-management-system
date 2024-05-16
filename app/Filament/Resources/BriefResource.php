@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\BriefResource\Pages;
 use App\Filament\Resources\BriefResource\RelationManagers;
 use App\Models\Brief;
+// use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -17,7 +18,7 @@ class BriefResource extends Resource
 {
     protected static ?string $model = Brief::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-briefcase';
 
     public static function form(Form $form): Form
     {
@@ -46,22 +47,22 @@ class BriefResource extends Resource
                     ->required()
                     ->columnSpanFull(),
                 Forms\Components\FileUpload::make('file')
-                    ->disk('s3')
-                    ->directory('brief-attachments')
+                    ->directory('briefs')
                     ->enableDownload()
-                    ->enableOpen()
-                    ->visibility('private'),
-                // Forms\Components\Select::make('assign')
-                //     ->relationship('users', 'name')
-                //     ->multiple()
-                //     ->preload()
-                //     ->searchable(),
+                    ->enableOpen(),
+                Forms\Components\Select::make('user')
+                    ->label('Assign')
+                    ->relationship('user', 'name')
+                    ->multiple()
+                    ->preload()
+                    ->searchable(),
                 Forms\Components\Select::make('status')
                     ->options([
                         'draft' => 'Draft',
                         'reviewing' => 'Reviewing',
                         'published' => 'Published',
                     ])
+                    
                     ->native(false),
             ]);
     }
@@ -72,10 +73,10 @@ class BriefResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('title')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('file')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('assign.name')
+                Tables\Columns\ImageColumn::make('file')
+                    ->searchable(),
+                    // ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('user')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
                     ->searchable(),
@@ -93,6 +94,7 @@ class BriefResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
